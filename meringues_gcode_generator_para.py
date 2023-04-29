@@ -184,9 +184,6 @@ else:
 
 
 print('; Python program - Number of arguments:', len(sys.argv), 'arguments.')
-print("; sqvol = {0:.2f}mm, retract = {1:.2f}mm, xrows = {2}, ycolumns = {3}, xspacing = {4}, xoffset = {5}, yspacing = {6}, yoffset = {7}, mer_diameter = {8}, mer_height = {9}, swirls = {10} homing = {11} ".format (
-  sqvol, retract, xrows, ycolumns, xspacing, xoffset, yspacing, yoffset, mer_diameter, mer_height, swirls, homing  ))
-
 print("; xrows = {0}, ycolumns = {1}, xspacing = {2}, yspacing = {3}, xoffset = {4},  yoffset = {5} ".format (xrows, ycolumns, xspacing,yspacing, xoffset,  yoffset  ))
 print("; sqvol = {0:.2f}mm, retract = {1:.2f}mm, mer_diameter = {2}, mer_height = {3}, swirls = {4} homing = {5} ".format ( sqvol, retract,  mer_diameter, mer_height, swirls, homing  ))
 print("; shape = {0} ".format(eshape))
