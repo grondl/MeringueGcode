@@ -106,7 +106,7 @@ class MeringueTool(tk.Tk):
         self.button_reset =  tk.Button(root_tab, text = "Reset all values",    bg = "red",    fg = "black", command = self.default_all)
         self.open_button =   tk.Button( root_tab, text='Open a File', command=self.file_open )
         self.proceed_button = tk.Button(root_tab, text="Produce G-Code", command=self.process)
-        self.test_button = tk.Button(root_tab, text="run test", command=self.runtest)
+        self.test_button = tk.Button(root_tab, text="run test", command=self.copy_command_to_clipboard)
 
 
        # submit, reset, open/save  file buttons
@@ -157,13 +157,13 @@ class MeringueTool(tk.Tk):
             return
         if not text:
             text = " ".join(["python", "meringues_gcode_generator_para.py" , "-x" , self.nX.get(), "-y", self.nY.get(), "-a" , self.oX.get(), "-b", self.oY.get(),
-                                                                             "-i" , self.sX.get(), "-j", self.sY.get(), "-p" , self.sh.get(), "-m" , self.ho.get() ])
+                                                                             "-i" , self.sX.get(), "-j", self.sY.get(), "-p" , self.sh.get(), "-m" , self.ho.get() ,
+                                                                             "-d" , self.mD.get(), "-t", self.mH.get(), "-r", self.re.get() , "-s", self.sV.get(), "-w", self.nS.get() ])
         try:
             self.gcode_status.set(text)
-            gcode_txt = subprocess.run(["python", "meringues_gcode_generator_para.py" , "-x" , self.nX.get(), "-y" , self.nY.get(),
-                                                                                       "-a" , self.oX.get(), "-b" , self.oY.get(),
-                                                                                        "-i" , self.sX.get(), "-j" , self.sY.get(),
-                                                                                        "-p" , self.sh.get(), "-m" , self.ho.get(),
+            gcode_txt = subprocess.run(["python", "meringues_gcode_generator_para.py" , "-x" , self.nX.get(), "-y", self.nY.get(), "-a" , self.oX.get(), "-b", self.oY.get(),
+                                                                             "-i" , self.sX.get(), "-j", self.sY.get(), "-p" , self.sh.get(), "-m" , self.ho.get() ,
+                                                                             "-d" , self.mD.get(), "-t", self.mH.get(), "-r", self.re.get() , "-s", self.sV.get(), "-w", self.nS.get()
                                                                                           ]  , capture_output=True, text=True, check=True, timeout= 3)
 
 
@@ -179,6 +179,12 @@ class MeringueTool(tk.Tk):
         self.clipboard_clear()
         self.clipboard_append(text)
         msg.showinfo("Copied Successfully", "Text copied to clipboard")
+
+    def copy_command_to_clipboard(self):
+        print( self.gcode_status.get() )
+        self.clipboard_clear()
+        self.clipboard_append(self.gcode_status.get())
+        msg.showinfo("Copied Successfully", "Command copied to clipboard")
 
     def file_open(self):
         # file type
@@ -262,7 +268,7 @@ class MeringueTool(tk.Tk):
         self.to.delete(0, tk.END) ; self.to.insert(0,"4")
         self.fN.delete(0, tk.END) ; self.fN.insert(0,"n.d.")
         self.sV.delete(0, tk.END) ; self.sV.insert(0,"1.8")
-        self.re.delete(0, tk.END) ; self.re.insert(0,"9.0")
+        self.re.delete(0, tk.END) ; self.re.insert(0,"4.0")
         self.mH.delete(0, tk.END) ; self.mH.insert(0,"12.0")
         self.mD.delete(0, tk.END) ; self.mD.insert(0,"13.0")
         self.nS.delete(0, tk.END) ; self.nS.insert(0,"3.0")
