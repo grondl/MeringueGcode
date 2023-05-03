@@ -2,7 +2,7 @@
 
 import tkinter as tk
 from tkinter import messagebox as msg
-from tkinter.ttk import Notebook
+from tkinter.ttk import Notebook, Combobox
 from tkinter import filedialog as fidi
 import re   # Regular Expressions
 import os
@@ -14,16 +14,17 @@ class MeringueTool(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        self.nparas = [ "nX","nY","oX","oY","sX","sY","sV","re","mH","mD","nS" ]
+        self.nparas = [ "nX","nY","oX","oY","sX","sY","sZ", "tZ", "sV", "re","mH","mD","nS" ]
         self.tparas = [ "ho","sh" ]
 
         self.title("Meringue G-Code generator v1")
-        self.geometry("850x650")
+        self.geometry("880x650")
 
         self.notebook = Notebook(self)
 
         root_tab = tk.Frame(self.notebook)
         gcode_tab = tk.Frame(self.notebook)
+        help_tab = tk.Frame(self.notebook)
 
         # root tab/page setup
         self.notebook.add(root_tab, text="Parameters/execution")
@@ -36,6 +37,10 @@ class MeringueTool(tk.Tk):
         self.label_ofY = tk.Label(root_tab, text = "Y offset  : ", fg = 'black', bg = 'snow')
         self.label_spX = tk.Label(root_tab, text = "X spacing  : ", fg = 'black', bg = 'snow')
         self.label_spY = tk.Label(root_tab, text = "Y spacing  : ", fg = 'black', bg = 'snow')
+
+        self.label_sqZ = tk.Label(root_tab, text = "Z squirt height  : ", fg = 'black', bg = 'snow')
+        self.label_trZ = tk.Label(root_tab, text = "Z travel height  : ", fg = 'black', bg = 'snow')
+
         self.label_tot = tk.Label(root_tab, text = "total number of buds  : ",  fg = 'black', bg = 'azure')
         self.label_fiN = tk.Label(root_tab, text = "filename : ",  fg = 'black', bg = 'azure')
         self.label_sqV = tk.Label(root_tab, text = "plunger travel (mm) => Squirt volume)  : ", fg = 'black', bg = 'snow')
@@ -61,6 +66,8 @@ class MeringueTool(tk.Tk):
         self.label_noS.grid(row = 13, column = 0, padx = 5, pady = 5,  sticky='e')
         self.label_hom.grid(row = 14, column = 0, padx = 5, pady = 5,  sticky='e')
         self.label_sha.grid(row = 15, column = 0, padx = 5, pady = 5,  sticky='e')
+        self.label_sqZ.grid(row =  5, column = 2, padx = 5, pady = 5,  sticky='e')
+        self.label_trZ.grid(row =  6, column = 2, padx = 5, pady = 5,  sticky='e')
 
 
         self.nX = tk.Entry(root_tab,validate="key", validatecommand=(self.register(self.onValidateInt  ), '%P'), width=5)
@@ -76,9 +83,14 @@ class MeringueTool(tk.Tk):
         self.mH = tk.Entry(root_tab,validate="key", validatecommand=(self.register(self.onValidateFloat), '%P'), width=6)
         self.mD = tk.Entry(root_tab,validate="key", validatecommand=(self.register(self.onValidateFloat), '%P'), width=6)
         self.nS = tk.Entry(root_tab,validate="key", validatecommand=(self.register(self.onValidateFloat), '%P'), width=5)
-        self.ho = tk.Entry(root_tab, width=10)
-        self.sh = tk.Entry(root_tab, width=10)
+        #self.ho = tk.Entry(root_tab, width=10)
+        self.ho = Combobox(root_tab, width="10", values=("yes","no"))
+        #self.sh = tk.Entry(root_tab, width=10)
+        self.sh = Combobox(root_tab, width="10", values=("kiss","coin","cone","nothing"))
         self.of = tk.Entry(root_tab, width=60)
+
+        self.sZ = tk.Entry(root_tab,validate="key", validatecommand=(self.register(self.onValidateFloat), '%P'), width=8)
+        self.tZ = tk.Entry(root_tab,validate="key", validatecommand=(self.register(self.onValidateFloat), '%P'), width=8)
 
 
         self.nX.grid(row =  1, column = 1, padx = 5, pady = 5, sticky='w')
@@ -98,6 +110,9 @@ class MeringueTool(tk.Tk):
         self.sh.grid(row = 15, column = 1, padx = 5, pady = 5, sticky='w')
         self.of.grid(row = 16, column = 1, padx = 5, pady = 5, sticky='w', columnspan = 3)
 
+        self.sZ.grid(row =  5, column = 3, padx = 5, pady = 5, sticky='w')
+        self.tZ.grid(row =  6, column = 3, padx = 5, pady = 5, sticky='w')
+
 
         # Create  open and save file, submit and reset buttons - and attache them
         self.button_open =   tk.Button(root_tab, text = "open", bg = "green2", fg = "black", command = self.file_open)
@@ -106,7 +121,7 @@ class MeringueTool(tk.Tk):
         self.button_reset =  tk.Button(root_tab, text = "Reset all values",    bg = "red",    fg = "black", command = self.default_all)
         self.open_button =   tk.Button( root_tab, text='Open a File', command=self.file_open )
         self.proceed_button = tk.Button(root_tab, text="Produce G-Code", command=self.process)
-        self.test_button = tk.Button(root_tab, text="run test", command=self.copy_command_to_clipboard)
+
 
 
        # submit, reset, open/save  file buttons
@@ -116,16 +131,18 @@ class MeringueTool(tk.Tk):
         #self.button_open.grid(   row = 7,  column = 3, pady = 5)
         self.button_save.grid(    row = 8,  column = 4, pady = 5)
         self.proceed_button.grid( row = 18, column = 0, padx = 5, pady = 5)
-        self.test_button.grid( row = 18, column = 3, padx = 5, pady = 5 )
+        #self.test_button.grid( row = 18, column = 3, padx = 5, pady = 5 )
 
         # GCode tab/page setup
         self.notebook.add(gcode_tab, text="G-Code")
 
-        self.param_gcgen = tk.Text(gcode_tab, bg="white", fg="black", width = 780, height=32)
+        self.param_gcgen = tk.Text(gcode_tab, bg="white", fg="black", width = 820, height=31)
         self.param_gcgen.pack(side=tk.TOP, expand=1)
 
-        self.gcode_copy_button = tk.Button(gcode_tab, text="Copy to Clipboard", command=self.copy_to_clipboard)
-        self.gcode_copy_button.pack(side=tk.BOTTOM, fill=tk.X)
+        self.gcode_copy_button = tk.Button(gcode_tab, text="Copy G-Code to Clipboard", command=self.copy_to_clipboard)
+        self.gcode_copy_button.pack(side=tk.TOP, fill=tk.NONE) #self.gcode_copy_button.pack(side=tk.BOTTOM, fill=tk.X)
+        self.test_button = tk.Button(gcode_tab, text="Copy command to Clipboard", command=self.copy_command_to_clipboard)
+        self.test_button.pack(side=tk.BOTTOM, fill=tk.NONE)
 
         self.gcode_status = tk.StringVar(gcode_tab)
         self.gcode_status.set("--")
@@ -135,6 +152,12 @@ class MeringueTool(tk.Tk):
 
         self.notebook.pack(fill=tk.BOTH, expand=1)
         self.default_all()
+
+        # Help tab/page setup
+        self.notebook.add(help_tab, text="Help/Info")
+        self.docum = tk.Text(help_tab, bg="white", fg="black", width = 820, height=33)
+        self.docum.pack(side=tk.TOP, expand=1)
+        self.docum.insert(1.0,"this page will document  help, info and credits ... \n\nto come")
 
     def onValidateFloat(self, P ):
         pattern = r"[-+]?\d*\.?\d*"
@@ -156,12 +179,12 @@ class MeringueTool(tk.Tk):
         if self.verify_parameters() == False:
             return
         if not text:
-            text = " ".join(["python", "meringues_gcode_generator_para.py" , "-x" , self.nX.get(), "-y", self.nY.get(), "-a" , self.oX.get(), "-b", self.oY.get(),
+            text = " ".join(["python", "meringues_gcode_generator_para.py" , "-x" , self.nX.get(), "-y", self.nY.get(), "-a" , self.oX.get(), "-b", self.oY.get(),"-z" , self.sZ.get(), "-k", self.tZ.get(),
                                                                              "-i" , self.sX.get(), "-j", self.sY.get(), "-p" , self.sh.get(), "-m" , self.ho.get() ,
                                                                              "-d" , self.mD.get(), "-t", self.mH.get(), "-r", self.re.get() , "-s", self.sV.get(), "-w", self.nS.get() ])
         try:
             self.gcode_status.set(text)
-            gcode_txt = subprocess.run(["python", "meringues_gcode_generator_para.py" , "-x" , self.nX.get(), "-y", self.nY.get(), "-a" , self.oX.get(), "-b", self.oY.get(),
+            gcode_txt = subprocess.run(["python", "meringues_gcode_generator_para.py" , "-x" , self.nX.get(), "-y", self.nY.get(), "-a" , self.oX.get(), "-b", self.oY.get() ,"-z" , self.sZ.get(), "-k", self.tZ.get(),
                                                                              "-i" , self.sX.get(), "-j", self.sY.get(), "-p" , self.sh.get(), "-m" , self.ho.get() ,
                                                                              "-d" , self.mD.get(), "-t", self.mH.get(), "-r", self.re.get() , "-s", self.sV.get(), "-w", self.nS.get()
                                                                                           ]  , capture_output=True, text=True, check=True, timeout= 3)
@@ -188,7 +211,7 @@ class MeringueTool(tk.Tk):
 
     def file_open(self):
         # file type
-        filetypes = (('text files', '*.gco'), ('All files', '*.*') )
+        filetypes = (('G-Code files', '*.gco *.nc *.gcode *.GCO *.NC *.GCODE *.Gcode'), ('All files', '*.*') )
         # show the open file dialog
         f = fidi.askopenfile(filetypes=filetypes)
         fn = f.name
@@ -265,6 +288,10 @@ class MeringueTool(tk.Tk):
         self.oY.delete(0, tk.END) ; self.oY.insert(0,"20")
         self.sX.delete(0, tk.END) ; self.sX.insert(0,"25")
         self.sY.delete(0, tk.END) ; self.sY.insert(0,"25")
+
+        self.sZ.delete(0, tk.END) ; self.sZ.insert(0,"0")
+        self.tZ.delete(0, tk.END) ; self.tZ.insert(0,"25")
+
         self.to.delete(0, tk.END) ; self.to.insert(0,"4")
         self.fN.delete(0, tk.END) ; self.fN.insert(0,"n.d.")
         self.sV.delete(0, tk.END) ; self.sV.insert(0,"1.8")
