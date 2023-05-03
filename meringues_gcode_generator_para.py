@@ -16,12 +16,14 @@ xspacing = 35
 xoffset = 20
 yspacing = 36
 yoffset = 3
+zsquirt = 0.0
+ztravel = 30.0
 mer_diameter =  3
 mer_height = 10
 swirls = 3
 homing = False
 eshape = 'kiss'
-list_of_shapes = [ 'kiss', 'coin' , 'cone', 'pyramid' ]
+list_of_shapes = [ 'kiss', 'coin' , 'cone', 'nothing' ]
 
 
 
@@ -36,55 +38,56 @@ def gcode_header():
 
 def gcode_footer(homing=False):
   print("; Footer start" )
-  print("G0 Z30")
+  print("G0 Z{0:.3f}".format(ztravel))
   if homing:
       print("G0 X20 Y20 ; homing=yes ... extrusion head moved close to home ")
   else:
       print("; stay there , do not drip on way back or sweep accross top of kisses  .. removed G0 X20 Y20")
   print("; Footer end")
 
-def gcode_coin( tsqvol , sqvol , xpos, ypos, mer_diameter, mer_height, retract):
+def gcode_coin( tsqvol , sqvol , xpos, ypos, zsquirt, ztravel , mer_diameter, mer_height, retract):
   print("; Bud is coin shaped ")
   print( "G1 X{0} Y{1} F800".format( xpos ,ypos) )
-  print( "G1 Z1 F600")
-  print( "G1 F100 E{0:.4f}".format(tsqvol)) # return to before previous retraction
+  print( "G1 Z{0:.3f} F600".format(zsquirt))
+  print( "G1 F100 E{0:.4f}".format(tsqvol)) # return E to before previous retraction
   # print("G92 E0")
   tsqvol+= sqvol-(sqvol/3.5)
   merr  = mer_diameter / 2
   print( "G2 I{0} J{1} F100 E{2:.4f}".format( merr,merr, tsqvol))
   tsqvol += (sqvol/3.5)
-  print( "G1 X{0} Y{1} Z{2} F100 E{3:.4f}".format(xpos+merr , ypos+merr , mer_diameter ,  tsqvol ))
+  print( "G1 X{0} Y{1} Z{2} F100 E{3:.4f}".format(xpos+merr , ypos+merr , mer_height ,  tsqvol ))
   print( "G4 P2000")
   print("G1 Z{0} F600".format(mer_height+5))
   print( "G1 F100 E{0:.4f}".format(tsqvol-retract ))
   print( "G4 P2000")
+  print("G1 Z{0:.3f} F600".format(ztravel))
   # print ... G1 E0 F600
   print("; Bud end")
   return( tsqvol );
 
-def gcode_kiss( tsqvol , sqvol ,retract, xpos, ypos, mer_diameter):
+def gcode_kiss( tsqvol , sqvol ,retract, xpos, ypos, zsquirt, ztravel , mer_diameter):
   print("; Bud is kiss shaped")
   print( "G1 X{0} Y{1} F2800".format( xpos ,ypos) )
-  print( "G1 Z0 F1500")
+  print( "G1 Z{0:.3f} F1000".format(zsquirt))
   # print("G92 E0")
   tsqvol+= sqvol
   merr  = mer_diameter / 2
-  print( "G1 Z8 F80 E{0:.3f}".format( tsqvol))
+  print( "G1 Z{0:.3f} F80 E{1:.3f}".format( zsquirt,tsqvol))
   tsqvol +=.1
   print( "G1 X{0} Y{1} Z{2} F100 E{3:.3f}".format(xpos , ypos , mer_height ,  tsqvol ))
   print( "G1 X{0} Y{1} Z{2} F100 E{3:.3f}".format(xpos , ypos , mer_height+10 ,  tsqvol-retract ))
   print( "G4 P2000")
-  print( "G1 Z40 F1200")
+  print("G1 Z{0:.3f} F1000".format(ztravel))
   # print ... G1 E0 F600
   print("; kiss shaped end")
   return( tsqvol );
 
-def gcode_cone( tsqvol , sqvol , xpos, ypos, mer_diameter, mer_height, swirls, retr):
+def gcode_cone( tsqvol , sqvol , xpos, ypos, zsquirt, ztravel ,mer_diameter, mer_height, swirls, retr):
   steps = 20
   print("; bud is Cone start")
   print( "G1 X{0} Y{1} F1000".format( xpos ,ypos) )
-  print( "G1 Z0 F800")
-  zp = 0 ; xpo = xpos ; ypo = ypos ;   zpo = zp
+  print( "G1 Z{0:.3f} F1000".format(zsquirt))
+  zp = zsquirt ; xpo = xpos ; ypo = ypos ;   zpo = zp
   # print("G92 E0")
   merr  = mer_diameter / 2
   angmax = int(swirls * 360)
@@ -101,7 +104,7 @@ def gcode_cone( tsqvol , sqvol , xpos, ypos, mer_diameter, mer_height, swirls, r
     zpo = zp
     tle += le
   print( "; total swirl squirt length : {0:.3f}mm,{1:.2f} *ml {2:.2f} *ml-tot    for a {3} swirl {4} mm diameter {5} mm high cone ".format(float(tle),float(sqvol), float(tsqvol), swirls, mer_diameter, mer_height) )
-  zp = 0 ; xpo = xpos ; ypo = ypos ;   zpo = zp
+  zp = zsquirt ; xpo = xpos ; ypo = ypos ;   zpo = zp
   for ang in range(0, angmax  , angst):
     rr =   merr * (angmax - ang) / angmax
     xp =  xpos + (math.cos( math.radians(ang)) * rr)
@@ -119,7 +122,7 @@ def gcode_cone( tsqvol , sqvol , xpos, ypos, mer_diameter, mer_height, swirls, r
     finishh = zp + mer_height /2
   print( "G1 Z{0:.3f} E{1:.3f} F100".format(finishh, tsqvol - retr ))
   print( "G4 P2000")
-  print("G1 Z30 F600")
+  print("G1 Z{0:.3f} F1000".format(ztravel))
   # print ... G1 E0 F600
   print("; Cone end")
   return( tsqvol );
@@ -137,10 +140,12 @@ argParser.add_argument("-s", "--sqvol", type=float, help="syringe squirt volume 
 argParser.add_argument("-r", "--retract", type=float, help="syringe retraction after squirt in mm plunger travel")
 argParser.add_argument("-x", "--xrows", type=int, help="number of rows X")
 argParser.add_argument("-y", "--ycolumns", type=int, help="number of columns Y")
+argParser.add_argument("-z", "--zsquirt", type=float, help="Z height when squirting material")
 argParser.add_argument("-a", "--xoffset", type=int, help="X offset in mm")
 argParser.add_argument("-b", "--yoffset", type=int, help="Y offset ei mm")
 argParser.add_argument("-i", "--xspacing", type=float, help="spacing between buds on X in mm")
 argParser.add_argument("-j", "--yspacing", type=float, help="spacing between buds on Y in mm")
+argParser.add_argument("-k", "--ztravel", type=float, help="Z height when travelling between buds")
 argParser.add_argument("-w", "--swirls", type=float, help="number of swirls when making a cone")
 argParser.add_argument("-d", "--mer_diameter", type=float, help="meringue diameter in mm")
 argParser.add_argument("-t", "--mer_height", type=float, help="meringue height in mm")
@@ -169,6 +174,10 @@ if args.xspacing is not None:
     xspacing = args.xspacing
 if args.yspacing is not None:
     yspacing = args.yspacing
+if args.zsquirt is not None:
+    zsquirt = args.zsquirt
+if args.ztravel is not None:
+    ztravel = args.ztravel
 if args.swirls is not None:
     swirls = args.swirls
 if args.mer_diameter is not None:
@@ -192,6 +201,7 @@ else:
 
 print('; Python program - Number of arguments:', len(sys.argv), 'arguments.')
 print("; xrows = {0}, ycolumns = {1}, xspacing = {2}, yspacing = {3}, xoffset = {4},  yoffset = {5} ".format (xrows, ycolumns, xspacing,yspacing, xoffset,  yoffset  ))
+print("; zsquirt = {0:.2f}mm, ztravel = {1:.2f}mm ".format (zsquirt, ztravel ))
 print("; sqvol = {0:.2f}mm, retract = {1:.2f}mm, mer_diameter = {2}, mer_height = {3}, swirls = {4} homing = {5} ".format ( sqvol, retract,  mer_diameter, mer_height, swirls, homing  ))
 print("; shape = {0} ".format(eshape))
 
@@ -208,13 +218,13 @@ for j in range( ycolumns): # Y
 
 
     if eshape == "kiss":
-        totsqvol = gcode_kiss( totsqvol , sqvol , retract, mx , my , mer_diameter )
+        totsqvol = gcode_kiss( totsqvol , sqvol , retract, mx , my , zsquirt, ztravel , mer_diameter )
     elif eshape == "cone":
-        totsqvol = gcode_cone(totsqvol, sqvol, mx, my, mer_diameter, mer_height, swirls, retract)
+        totsqvol = gcode_cone(totsqvol, sqvol, mx, my, zsquirt, ztravel , mer_diameter, mer_height, swirls, retract)
     elif eshape == "coin":
-        totsqvol = gcode_coin( totsqvol , sqvol , mx , my , mer_diameter,mer_height, retract )
+        totsqvol = gcode_coin( totsqvol , sqvol , mx , my, zsquirt , ztravel , mer_diameter, mer_height, retract )
     else:
-        print("pas de forme choisie")
+        print(";No shape chosen !")
 
 
 gcode_footer(homing)
