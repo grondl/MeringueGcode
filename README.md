@@ -5,5 +5,5 @@ The program produces G-Code that is meant to cold extrude meringues onto a sheet
 
 meringue_gcode_GUI.py is a tkinter graphical interface that calls meringues_gcode_generator_para.py (which has to be in the same directory).  It can save the G-Code to a file in the local directory or the G-Code can be copied (for pasting) from the 'G-Code' tab.  Again,  work in progress here for example   dealing with files is not robust.
 
-Having added the custom shape to the main program and since the sustom shape is stored in the GCode-array.pik (pickled) file. I've added the
+Having added the custom shape to the main program and since the custom shape is stored in the GCode-array.pik (pickled) file. I've added the
 meringue_draw_gcode_array.py program.  It helps in drawing a rudimentary shape and makes the corresponding '.pik' file.
