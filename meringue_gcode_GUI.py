@@ -49,7 +49,7 @@ class MeringueTool(tk.Tk):
         self.label_meD = tk.Label(root_tab, text = "meringue diameter (mm)  : ", fg = 'black', bg = 'snow')
         self.label_noS = tk.Label(root_tab, text = "number of swirls  : ", fg = 'black', bg = 'snow')
         self.label_hom = tk.Label(root_tab, text = "homing after (yes/no)  : ", fg = 'black', bg = 'snow')
-        self.label_sha = tk.Label(root_tab, text = "shape (bud/kiss/cone)  : ", fg = 'black', bg = 'snow')
+        self.label_sha = tk.Label(root_tab, text = "shape (bud/kiss/cone/leaf/custom/cycle)  : ", fg = 'black', bg = 'snow')
 
         self.label_noX.grid(row =  1, column = 0, padx = 5, pady = 5 , sticky='e')
         self.label_noY.grid(row =  2, column = 0, padx = 5, pady = 5 , sticky='e')
@@ -86,7 +86,7 @@ class MeringueTool(tk.Tk):
         #self.ho = tk.Entry(root_tab, width=10)
         self.ho = Combobox(root_tab, width="10", values=("yes","no"))
         #self.sh = tk.Entry(root_tab, width=10)
-        self.sh = Combobox(root_tab, width="10", values=("kiss","coin","cone","nothing"))
+        self.sh = Combobox(root_tab, width="10", values=("kiss", "coin", "cone", "leaf","custom","cycle", "nothing"))
         self.of = tk.Entry(root_tab, width=60)
 
         self.sZ = tk.Entry(root_tab,validate="key", validatecommand=(self.register(self.onValidateFloat), '%P'), width=8)
@@ -234,7 +234,6 @@ class MeringueTool(tk.Tk):
                 content = self.param_gcgen.get('1.0', tk.END)
                 f.write(content)
                 msg.showinfo("File written", fin + " ... saved to local directory")
-                f.close
         else:
             msg.showinfo("No file written", "file name not defined or empty")
 
@@ -243,15 +242,15 @@ class MeringueTool(tk.Tk):
         for par in self.nparas:
             parv = eval("self." + par + ".get()" )
             if ( parv is not None) and ( parv !='') :
-               param += par + "= " + eval("self." + par + ".get()" ) + " "
+                param += par + "= " + eval("self." + par + ".get()" ) + " "
         msg.showinfo( " result ", param )
 
     def verify_parameters(self):
         for par in self.nparas:
             parv = eval("self." + par + ".get()" )
             if ( parv is None) or ( parv == '') :
-               msg.showinfo( "one or more missing parameter ",par )
-               return False
+                msg.showinfo( "one or more missing parameter ",par )
+                return False
         if (self.ho.get()) is None or ( self.ho.get() == '' ) :
             msg.showinfo( "Problem","one or more missing parameter (--home)" )
             return False
@@ -269,8 +268,8 @@ class MeringueTool(tk.Tk):
         voX = int(self.oX.get())
         voY = int(self.oY.get())
 
-        # Calculates compound interest
-        if (vnY != '' ) and (vnY != '') :
+        # Calculates total entities extuded
+        if (vnX != '' ) and (vnY != '') :
             number = vnX * vnY
         else:
             number = 0
